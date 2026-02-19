@@ -29,15 +29,27 @@
     },
     "clawwork": {
       "path": "/home/kareltestspecial/KDC/clawwork",
-      "description": "LiveBench Dashboard — AI model evaluatie & benchmarking",
+      "description": "LiveBench Dashboard \u2014 AI model evaluatie & benchmarking",
       "tech": "Python + Node.js (pnpm)",
-      "start_script": "start_waterfall_dashboard.sh",
+      "start_script": "node launch.js",
+      "pm2_name": "clawwork",
       "ports": [],
-      "services": ["clawwork-backend", "clawwork-frontend", "clawwork-mcp"],
-      "process_patterns": ["python server.py", "pnpm dev"],
+      "services": [
+        "clawwork-backend",
+        "clawwork-frontend",
+        "clawwork-mcp"
+      ],
+      "process_patterns": [
+        "launch.js",
+        "python3 server.py",
+        "vite"
+      ],
       "relations": [],
-      "log_files": ["logs/api.log", "logs/frontend.log"],
-      "notes": "Poorten via register: clawwork-backend, clawwork-frontend, clawwork-mcp."
+      "log_files": [
+        "logs/api.log",
+        "logs/frontend.log"
+      ],
+      "notes": "Poorten via register: clawwork-backend, clawwork-frontend."
     },
     "karelsassistant": {
       "path": "/home/kareltestspecial/KDC/karelsassistant",
