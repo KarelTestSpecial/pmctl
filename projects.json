@@ -1,6 +1,6 @@
 {
-  "_note": "Poorten worden NIET hardcoded \u2014 live uit http://localhost:4444/ports. Services worden beheerd via PM2 (pm2 list).",
-  "_startup": "~/start-assistant.sh \u2014 start alles in \u00e9\u00e9n keer (Port Registry + PM2 services)",
+  "_note": "Poorten worden NIET hardcoded — live uit http://localhost:4444/ports. Services worden beheerd via PM2 (pm2 list).",
+  "_startup": "~/start-assistant.sh — start alles in één keer (Port Registry + PM2 services)",
   "projects": {
     "pmctl": {
       "path": "/home/kareltestspecial/KDC/pmctl",
@@ -8,98 +8,62 @@
       "tech": "Python (Flask)",
       "start_script": null,
       "pm2_name": "pmctl",
-      "ports": [
-        7777
-      ],
-      "services": [
-        "pmctl"
-      ],
-      "process_patterns": [
-        "pmctl.py"
-      ],
+      "ports": [7777],
+      "services": ["pmctl"],
+      "process_patterns": ["pmctl.py"],
       "relations": [],
       "log_files": [],
       "notes": "Beheerd via PM2 (pm2 name: pmctl). Web UI: http://localhost:7777. Start via: pmctl web."
     },
     "port-registry": {
       "path": "/home/kareltestspecial/KDC/port-registry",
-      "description": "Centraal poortenregister \u2014 enige bron van waarheid (bootstrap :4444)",
+      "description": "Centraal poortenregister — enige bron van waarheid (bootstrap :4444)",
       "tech": "Python (FastAPI)",
       "start_script": null,
-      "ports": [
-        4444
-      ],
-      "services": [
-        "port-registry"
-      ],
-      "process_patterns": [
-        "port-registry/server.py"
-      ],
+      "ports": [4444],
+      "services": ["port-registry"],
+      "process_patterns": ["port-registry/server.py"],
       "relations": [],
-      "log_files": [
-        "registry.log"
-      ],
+      "log_files": ["registry.log"],
       "notes": "Start via: ~/start-assistant.sh. Bootstrap-poort 4444 is de ENIGE hardcoded poort."
     },
     "clawwork": {
       "path": "/home/kareltestspecial/KDC/clawwork",
-      "description": "LiveBench Dashboard \u2014 AI model evaluatie & benchmarking",
+      "description": "LiveBench Dashboard — AI model evaluatie & benchmarking",
       "tech": "Python + Node.js (pnpm)",
       "start_script": "start_waterfall_dashboard.sh",
       "ports": [],
-      "services": [
-        "clawwork-backend",
-        "clawwork-frontend",
-        "clawwork-mcp"
-      ],
-      "process_patterns": [
-        "python server.py",
-        "pnpm dev"
-      ],
+      "services": ["clawwork-backend", "clawwork-frontend", "clawwork-mcp"],
+      "process_patterns": ["python server.py", "pnpm dev"],
       "relations": [],
-      "log_files": [
-        "logs/api.log",
-        "logs/frontend.log"
-      ],
-      "notes": "Poorten via register: clawwork-backend, clawwork-frontend, clawwork-mcp. Start via start_waterfall_dashboard.sh."
+      "log_files": ["logs/api.log", "logs/frontend.log"],
+      "notes": "Poorten via register: clawwork-backend, clawwork-frontend, clawwork-mcp."
     },
     "karelsassistant": {
       "path": "/home/kareltestspecial/KDC/karelsassistant",
-      "description": "AIGA \u2014 Autonoom AI-assistentsysteem",
+      "description": "AIGA — Autonoom AI-assistentsysteem",
       "tech": "Python (FastAPI/uvicorn) + Node.js",
       "start_script": "start-aiga.sh",
       "pm2_name": "aiga-api",
       "ports": [],
-      "services": [
-        "aiga-api"
-      ],
-      "process_patterns": [
-        "uvicorn src.aiga.api:app"
-      ],
-      "relations": [
-        "central-ai-waterfall"
-      ],
-      "log_files": [
-        "backend.log"
-      ],
-      "notes": "Beheerd via PM2 (pm2 name: aiga-api). Poort via register: aiga-api (:8001)."
+      "services": ["aiga-api", "aiga-worker"],
+      "process_patterns": ["uvicorn src.aiga.api:app", "income_loop.py"],
+      "relations": ["central-ai-waterfall"],
+      "log_files": ["backend.log"],
+      "notes": "Beheerd via PM2. Worker zoekt 24/7 leads. Dashboard: :8001"
     },
     "master-dashboard": {
       "path": "/home/kareltestspecial/KDC/master-dashboard",
-      "description": "Centraal Master Dashboard \u2014 gebouwd door Gemini CLI",
+      "description": "Centraal Master Dashboard — gebouwd door Gemini CLI",
       "tech": "React + Vite (pnpm)",
       "start_script": null,
       "pm2_name": "master-dashboard",
       "ports": [],
-      "services": [
-        "master-dashboard"
-      ],
-      "process_patterns": [
-        "vite"
-      ],
+      "services": ["master-dashboard"],
+      "process_patterns": ["vite"],
       "relations": [],
       "log_files": [],
-      "notes": "Beheerd via PM2 (pm2 name: master-dashboard). Poort via register: :3002. Open: http://localhost:3002"
+      "notes": "Beheerd via PM2. Poort via register: :3002. Open: http://localhost:3002"
     },
     "central-ai-waterfall": {
       "path": "/home/kareltestspecial/KDC/central-ai-waterfall",
@@ -108,31 +72,24 @@
       "start_script": null,
       "pm2_name": "aiga-waterfall",
       "ports": [],
-      "services": [
-        "central-ai-waterfall"
-      ],
-      "process_patterns": [
-        "central-ai-waterfall/server.js"
-      ],
+      "services": ["aiga-waterfall"],
+      "process_patterns": ["central-ai-waterfall/server.js"],
       "relations": [],
-      "log_files": [
-        "server.log"
-      ],
-      "notes": "Beheerd via PM2 (pm2 name: aiga-waterfall). Poort via register: :5005."
+      "log_files": ["server.log"],
+      "notes": "Beheerd via PM2. Poort via register: :5005."
     },
     "OCI": {
       "path": "/home/kareltestspecial/KDC/OCI",
-      "description": "Oracle Cloud Infrastructure \u2014 setup & configuratiescripts",
+      "description": "Oracle Cloud Infrastructure — VPS Hunter",
       "tech": "Bash",
-      "start_script": null,
+      "start_script": "retry_launch.sh",
+      "pm2_name": "oci-hunt",
       "ports": [],
-      "services": [],
-      "process_patterns": [],
+      "services": ["oci-hunt"],
+      "process_patterns": ["retry_launch.sh"],
       "relations": [],
-      "log_files": [
-        "retry_log.txt"
-      ],
-      "notes": "Geen permanente service. Gebruik install.sh of retry_launch.sh handmatig."
+      "log_files": ["retry_log.txt"],
+      "notes": "Draait 24/7 via PM2 om gratis VPS te claimen."
     },
     "24-7": {
       "path": "/home/kareltestspecial/KDC/24-7",
@@ -149,13 +106,14 @@
     "portfolio-aiga": {
       "path": "/home/kareltestspecial/KDC/portfolio-aiga",
       "description": "Persoonlijke portfolio website",
-      "tech": "React",
-      "ports": [
-        3000
-      ],
-      "services": [
-        "portfolio-aiga"
-      ]
+      "tech": "React + Vite",
+      "start_script": "node launch.js",
+      "pm2_name": "portfolio-aiga",
+      "ports": [],
+      "services": ["portfolio-aiga"],
+      "process_patterns": ["launch.js", "react-scripts start"],
+      "relations": [],
+      "notes": "Dynamisch toegewezen poort via Port Registry."
     }
   }
 }
