@@ -96,11 +96,11 @@ def find_processes(project: Dict) -> List:
         return []
 
     found: Dict[int, Any] = {}
-    path = project.get("path", "").rstrip("/")
+    path = project.get("path", "")
     ports = project.get("ports", [])
     patterns = project.get("process_patterns", [])
 
-    # 1. Via poort (meest betrouwbaar)
+    # Via poort (meest betrouwbaar)
     if ports:
         try:
             for conn in psutil.net_connections(kind="inet"):
@@ -113,23 +113,20 @@ def find_processes(project: Dict) -> List:
         except (psutil.AccessDenied, PermissionError):
             pass
 
-    # 2. Via werkdirectory of cmdline
-    if path:
+    # Via process_patterns + werkdirectory (alleen als er patronen zijn)
+    if path and patterns:
+        # Exacte padgrens: /project of /project/...  maar NIET /project-other
+        path_norm = path.rstrip("/")
         try:
             for proc in psutil.process_iter(["pid", "cwd", "cmdline", "name"]):
                 try:
                     cwd = proc.info.get("cwd") or ""
                     cmdline = " ".join(proc.info.get("cmdline") or [])
-                    
-                    # Match als cwd in projectmap zit of als pad/naam in cmdline staat
-                    cwd_match = cwd == path or cwd.startswith(path + "/")
-                    pattern_match = any(p.lower() in cmdline.lower() for p in patterns) if patterns else False
-                    path_in_cmd = path in cmdline
-                    
-                    # UITSLUITINGEN: match niet op pmctl zelf, gemini, sub-projecten of development tools
-                    is_excluded = any(x in cmdline for x in ["pmctl", ".gemini", "gemini-cli", "node_modules/.bin/vite", "master-dashboard", "central-ai-waterfall", "pnpm", "vite", "bash"])
-                    
-                    if (cwd_match or pattern_match or path_in_cmd) and not is_excluded:
+                    # Cwd moet exact in de projectmap zijn
+                    cwd_match = cwd == path_norm or cwd.startswith(path_norm + "/")
+                    # Cmdline moet een van de geconfigureerde patronen bevatten
+                    pattern_match = any(p.lower() in cmdline.lower() for p in patterns)
+                    if (cwd_match or pattern_match) and "pmctl" not in cmdline:
                         found[proc.pid] = proc
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     pass
@@ -508,44 +505,45 @@ def do_start(name: str, project: Dict) -> bool:
 
 
 def do_stop(name: str, project: Dict) -> bool:
+    # PM2-beheerd project → via PM2
     pm2_name = project.get("pm2_name")
     if pm2_name:
-        console.print(f"[cyan]\u25a0  PM2 stop: [bold]{pm2_name}[/]...")
-        pm2_action(pm2_name, "stop")
+        console.print(f"[cyan]■  PM2 stop: [bold]{pm2_name}[/]...")
+        if pm2_action(pm2_name, "stop"):
+            console.print(f"[green]✓  {name} gestopt via PM2.[/]")
+            return True
+        console.print(f"[yellow]⚠  PM2 stop mislukt, probeer proces-kill...[/]")
 
-    # Resolve ports BEFORE finding processes to ensure we catch everything
-    ports = resolve_project_ports(project)
-    project_with_ports = {**project, "ports": ports}
-    procs = find_processes(project_with_ports)
+    procs = find_processes(project)
 
     if not procs:
-        if not pm2_name:
-            console.print(f"[yellow]\u26a0  '{name}' draait niet.[/]")
+        console.print(f"[yellow]⚠  '{name}' draait niet.[/]")
         return True
 
-    console.print(f"[cyan]\u25a0  Stoppen van {len(procs)} processen voor '{name}'...[/]")
-    for p in procs:
+    console.print(f"[cyan]■  Stoppen: [bold]{name}[/] ({len(procs)} proces(sen))...")
+
+    for proc in procs:
         try:
-            p.terminate()
-        except:
+            proc.terminate()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
     time.sleep(2)
-    remaining = find_processes(project_with_ports)
-    if remaining:
-        console.print(f"[yellow]\u26a0  {len(remaining)} zombie-proces(sen) na stop. Force kill...[/]")
-        for p in remaining:
-            try:
-                p.kill()
-            except:
-                pass
-        time.sleep(1)
+
+    still = find_processes(project)
+    for proc in still:
+        try:
+            proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+
+    time.sleep(1)
 
     if not is_running(project):
-        console.print(f"[green]\u2713  {name} gestopt.[/]")
+        console.print(f"[green]✓  {name} gestopt.[/]")
         return True
     else:
-        console.print(f"[red]\u2717  Kon {name} niet volledig stoppen.[/]")
+        console.print(f"[red]✗  Kon {name} niet volledig stoppen.[/]")
         return False
 
 
