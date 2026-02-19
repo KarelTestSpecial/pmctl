@@ -1,0 +1,93 @@
+{
+  "_note": "Poorten worden NIET hardcoded — live uit http://localhost:4444/ports. Services worden beheerd via PM2 (pm2 list).",
+  "_startup": "~/start-assistant.sh — start alles in één keer (Port Registry + PM2 services)",
+  "projects": {
+    "port-registry": {
+      "path": "/home/kareltestspecial/port-registry",
+      "description": "Centraal poortenregister — enige bron van waarheid (bootstrap :4444)",
+      "tech": "Python (FastAPI)",
+      "start_script": null,
+      "ports": [4444],
+      "services": ["port-registry"],
+      "process_patterns": ["port-registry/server.py"],
+      "relations": [],
+      "log_files": ["registry.log"],
+      "notes": "Start via: ~/start-assistant.sh. Bootstrap-poort 4444 is de ENIGE hardcoded poort."
+    },
+    "clawwork": {
+      "path": "/home/kareltestspecial/clawwork",
+      "description": "LiveBench Dashboard — AI model evaluatie & benchmarking",
+      "tech": "Python + Node.js (pnpm)",
+      "start_script": "start_waterfall_dashboard.sh",
+      "ports": [],
+      "services": ["clawwork-backend", "clawwork-frontend", "clawwork-mcp"],
+      "process_patterns": ["python server.py", "pnpm dev"],
+      "relations": [],
+      "log_files": ["logs/api.log", "logs/frontend.log"],
+      "notes": "Poorten via register: clawwork-backend, clawwork-frontend, clawwork-mcp. Start via start_waterfall_dashboard.sh."
+    },
+    "karelsassistant": {
+      "path": "/home/kareltestspecial/karelsassistant",
+      "description": "AIGA — Autonoom AI-assistentsysteem",
+      "tech": "Python (FastAPI/uvicorn) + Node.js",
+      "start_script": "start-aiga.sh",
+      "pm2_name": "aiga-api",
+      "ports": [],
+      "services": ["aiga-api"],
+      "process_patterns": ["uvicorn src.aiga.api:app"],
+      "relations": ["central-ai-waterfall"],
+      "log_files": ["backend.log"],
+      "notes": "Beheerd via PM2 (pm2 name: aiga-api). Poort via register: aiga-api (:8001)."
+    },
+    "master-dashboard": {
+      "path": "/home/kareltestspecial/karelsassistant/master-dashboard",
+      "description": "Centraal Master Dashboard — gebouwd door Gemini CLI",
+      "tech": "React + Vite (pnpm)",
+      "start_script": null,
+      "pm2_name": "master-dashboard",
+      "ports": [],
+      "services": ["master-dashboard"],
+      "process_patterns": ["vite"],
+      "relations": [],
+      "log_files": [],
+      "notes": "Beheerd via PM2 (pm2 name: master-dashboard). Poort via register: :3002. Open: http://localhost:3002"
+    },
+    "central-ai-waterfall": {
+      "path": "/home/kareltestspecial/karelsassistant/central-ai-waterfall",
+      "description": "Gecentraliseerde AI Waterfall Service (OpenAI compatibel)",
+      "tech": "Node.js (Express)",
+      "start_script": null,
+      "pm2_name": "aiga-waterfall",
+      "ports": [],
+      "services": ["central-ai-waterfall"],
+      "process_patterns": ["central-ai-waterfall/server.js"],
+      "relations": [],
+      "log_files": ["server.log"],
+      "notes": "Beheerd via PM2 (pm2 name: aiga-waterfall). Poort via register: :5005."
+    },
+    "OCI": {
+      "path": "/home/kareltestspecial/OCI",
+      "description": "Oracle Cloud Infrastructure — setup & configuratiescripts",
+      "tech": "Bash",
+      "start_script": null,
+      "ports": [],
+      "services": [],
+      "process_patterns": [],
+      "relations": [],
+      "log_files": ["retry_log.txt"],
+      "notes": "Geen permanente service. Gebruik install.sh of retry_launch.sh handmatig."
+    },
+    "karelsassistant247": {
+      "path": "/home/kareltestspecial/karelsassistant247",
+      "description": "24/7 omzetplanning & taakbeheer",
+      "tech": "Markdown",
+      "start_script": null,
+      "ports": [],
+      "services": [],
+      "process_patterns": [],
+      "relations": [],
+      "log_files": [],
+      "notes": "Geen draaiende service. Taakdocumenten: _todo.md, _inprogress.md, _done.md, _backlog.md."
+    }
+  }
+}
