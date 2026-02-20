@@ -2,58 +2,10 @@
   "_note": "Poorten worden NIET hardcoded — live uit http://localhost:4444/ports. Services worden beheerd via PM2 (pm2 list).",
   "_startup": "~/start-assistant.sh — start alles in één keer (Port Registry + PM2 services)",
   "projects": {
-    "pmctl": {
-      "path": "/home/kareltestspecial/KDC/pmctl",
-      "description": "Project Manager CLI + Web Dashboard",
-      "tech": "Python (Flask)",
-      "start_script": null,
-      "pm2_name": "pmctl",
-      "ports": [7777],
-      "services": ["pmctl"],
-      "process_patterns": ["pmctl.py"],
-      "relations": [],
-      "log_files": [],
-      "notes": "Beheerd via PM2 (pm2 name: pmctl). Web UI: http://localhost:7777. Start via: pmctl web."
-    },
-    "port-registry": {
-      "path": "/home/kareltestspecial/KDC/port-registry",
-      "description": "Centraal poortenregister — enige bron van waarheid (bootstrap :4444)",
-      "tech": "Python (FastAPI)",
-      "start_script": null,
-      "ports": [4444],
-      "services": ["port-registry"],
-      "process_patterns": ["port-registry/server.py"],
-      "relations": [],
-      "log_files": ["registry.log"],
-      "notes": "Start via: ~/start-assistant.sh. Bootstrap-poort 4444 is de ENIGE hardcoded poort."
-    },
-    "clawwork": {
-      "path": "/home/kareltestspecial/KDC/clawwork",
-      "description": "LiveBench Dashboard \u2014 AI model evaluatie & benchmarking",
-      "tech": "Python + Node.js (pnpm)",
-      "start_script": "node launch.js",
-      "pm2_name": "clawwork",
-      "ports": [],
-      "services": [
-        "clawwork-backend",
-        "clawwork-frontend",
-        "clawwork-mcp"
-      ],
-      "process_patterns": [
-        "launch.js",
-        "python3 server.py",
-        "vite"
-      ],
-      "relations": [],
-      "log_files": [
-        "logs/api.log",
-        "logs/frontend.log"
-      ],
-      "notes": "Poorten via register: clawwork-backend, clawwork-frontend."
-    },
-    "karelsassistant": {
-      "path": "/home/kareltestspecial/KDC/karelsassistant",
-      "description": "AIGA — Autonoom AI-assistentsysteem",
+    "aiga": {
+      "category": "agent",
+      "path": "/home/kareltestspecial/KDC/aiga",
+      "description": "AIGA — Artificial Intelligence Income Generating Agent (jobs via Fiverr/Upwork)",
       "tech": "Python (FastAPI/uvicorn) + Node.js",
       "start_script": "start-aiga.sh",
       "pm2_name": "aiga-api",
@@ -64,33 +16,8 @@
       "log_files": ["backend.log"],
       "notes": "Beheerd via PM2. Worker zoekt 24/7 leads. Dashboard: :8001"
     },
-    "master-dashboard": {
-      "path": "/home/kareltestspecial/KDC/master-dashboard",
-      "description": "Centraal Master Dashboard — gebouwd door Gemini CLI",
-      "tech": "React + Vite (pnpm)",
-      "start_script": null,
-      "pm2_name": "master-dashboard",
-      "ports": [],
-      "services": ["master-dashboard"],
-      "process_patterns": ["vite"],
-      "relations": [],
-      "log_files": [],
-      "notes": "Beheerd via PM2. Poort via register: :3002. Open: http://localhost:3002"
-    },
-    "central-ai-waterfall": {
-      "path": "/home/kareltestspecial/KDC/central-ai-waterfall",
-      "description": "Gecentraliseerde AI Waterfall Service (OpenAI compatibel)",
-      "tech": "Node.js (Express)",
-      "start_script": null,
-      "pm2_name": "aiga-waterfall",
-      "ports": [],
-      "services": ["aiga-waterfall"],
-      "process_patterns": ["central-ai-waterfall/server.js"],
-      "relations": [],
-      "log_files": ["server.log"],
-      "notes": "Beheerd via PM2. Poort via register: :5005."
-    },
     "OCI": {
+      "category": "agent",
       "path": "/home/kareltestspecial/KDC/OCI",
       "description": "Oracle Cloud Infrastructure — VPS Hunter",
       "tech": "Bash",
@@ -103,7 +30,33 @@
       "log_files": ["retry_log.txt"],
       "notes": "Draait 24/7 via PM2 om gratis VPS te claimen."
     },
+    "clawwork": {
+      "category": "agent",
+      "path": "/home/kareltestspecial/KDC/clawwork",
+      "description": "LiveBench Dashboard — AI model evaluatie & benchmarking",
+      "tech": "Python + Node.js (pnpm)",
+      "start_script": "node launch.js",
+      "pm2_name": "clawwork",
+      "ports": [],
+      "services": [
+        "clawwork-backend",
+        "clawwork-frontend",
+        "clawwork-mcp"
+      ],
+      "process_patterns": [
+        "clawwork/launch.js",
+        "clawwork/server.py",
+        "clawwork/node_modules"
+      ],
+      "relations": [],
+      "log_files": [
+        "logs/api.log",
+        "logs/frontend.log"
+      ],
+      "notes": "Gepauzeerd. Poorten via register: clawwork-backend, clawwork-frontend."
+    },
     "24-7": {
+      "category": "agent",
       "path": "/home/kareltestspecial/KDC/24-7",
       "description": "24/7 omzetplanning & taakbeheer",
       "tech": "Markdown",
@@ -115,17 +68,60 @@
       "log_files": [],
       "notes": "Geen draaiende service. Taakdocumenten: _todo.md, _inprogress.md, _done.md, _backlog.md."
     },
-    "portfolio-aiga": {
-      "path": "/home/kareltestspecial/KDC/portfolio-aiga",
-      "description": "Persoonlijke portfolio website",
-      "tech": "React + Vite",
-      "start_script": "node launch.js",
-      "pm2_name": "portfolio-aiga",
+    "central-ai-waterfall": {
+      "category": "infra",
+      "path": "/home/kareltestspecial/KDC/central-ai-waterfall",
+      "description": "Gecentraliseerde AI Waterfall Service (OpenAI compatibel)",
+      "tech": "Node.js (Express)",
+      "start_script": null,
+      "pm2_name": "aiga-waterfall",
       "ports": [],
-      "services": ["portfolio-aiga"],
-      "process_patterns": ["launch.js", "react-scripts start"],
+      "services": ["central-ai-waterfall"],
+      "process_patterns": ["central-ai-waterfall/server.js"],
       "relations": [],
-      "notes": "Dynamisch toegewezen poort via Port Registry."
+      "log_files": ["server.log"],
+      "notes": "Beheerd via PM2. Poort via register: :5005."
+    },
+    "port-registry": {
+      "category": "infra",
+      "path": "/home/kareltestspecial/KDC/port-registry",
+      "description": "Centraal poortenregister — enige bron van waarheid (bootstrap :4444)",
+      "tech": "Python (FastAPI)",
+      "start_script": null,
+      "ports": [4444],
+      "services": ["port-registry"],
+      "process_patterns": ["port-registry/server.py"],
+      "relations": [],
+      "log_files": ["registry.log"],
+      "notes": "Start via: ~/start-assistant.sh. Bootstrap-poort 4444 is de ENIGE hardcoded poort."
+    },
+    "pmctl": {
+      "category": "infra",
+      "path": "/home/kareltestspecial/KDC/pmctl",
+      "description": "Project Manager CLI + Web Dashboard",
+      "tech": "Python (Flask)",
+      "start_script": null,
+      "pm2_name": "pmctl",
+      "ports": [7777],
+      "services": ["pmctl"],
+      "process_patterns": ["pmctl.py"],
+      "relations": [],
+      "log_files": [],
+      "notes": "Beheerd via PM2 (pm2 name: pmctl). Web UI: http://localhost:7777. Start via: pmctl web."
+    },
+    "master-dashboard": {
+      "category": "infra",
+      "path": "/home/kareltestspecial/KDC/master-dashboard",
+      "description": "KDC Dashboard — visueel overzicht van het ecosysteem",
+      "tech": "React + Vite (pnpm)",
+      "start_script": null,
+      "pm2_name": "master-dashboard",
+      "ports": [],
+      "services": ["master-dashboard"],
+      "process_patterns": ["master-dashboard/node_modules"],
+      "relations": [],
+      "log_files": [],
+      "notes": "Beheerd via PM2. Poort via register: :3002. Open: http://localhost:3002"
     }
   }
 }

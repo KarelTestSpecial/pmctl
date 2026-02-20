@@ -55,7 +55,7 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
     from fastapi.responses import HTMLResponse, JSONResponse
     from fastapi.middleware.cors import CORSMiddleware
     import uvicorn as _uvicorn
@@ -399,6 +399,7 @@ def get_project_info(name: str, project: Dict, include_disk: bool = True) -> Dic
         "description": project.get("description", ""),
         "tech": project.get("tech", ""),
         "path": project.get("path", ""),
+        "category": project.get("category", ""),
         "status": "running" if running else "stopped",
         "ports": ports,
         "open_ports": sorted(set(open_ports)),
@@ -999,6 +1000,51 @@ def build_fastapi_app():
         content = read_logs(projects[name], lines)
         return JSONResponse({"content": content})
 
+    @web.delete("/api/projects/{name}")
+    def api_delete_project(name: str):
+        projects = load_projects()
+        if name not in projects:
+            return JSONResponse({"success": False, "message": "niet gevonden"}, status_code=404)
+        del projects[name]
+        save_projects(projects)
+        return JSONResponse({"success": True, "message": f"{name} verwijderd"})
+
+    @web.post("/api/pm2/stop-all")
+    def api_pm2_stop_all():
+        result = subprocess.run(["pm2", "stop", "all"], capture_output=True, text=True)
+        return JSONResponse({"success": result.returncode == 0, "output": result.stdout + result.stderr})
+
+    @web.post("/api/pm2/start-all")
+    def api_pm2_start_all():
+        result = subprocess.run(["pm2", "start", "all"], capture_output=True, text=True)
+        return JSONResponse({"success": result.returncode == 0, "output": result.stdout + result.stderr})
+
+    @web.post("/api/projects")
+    async def api_add_project(request: Request):
+        body = await request.json()
+        name = body.get("name", "").strip()
+        if not name:
+            return JSONResponse({"success": False, "message": "naam verplicht"}, status_code=400)
+        projects = load_projects()
+        if name in projects:
+            return JSONResponse({"success": False, "message": "naam bestaat al"}, status_code=400)
+        projects[name] = {
+            "category": body.get("category", "agent"),
+            "path": body.get("path", ""),
+            "description": body.get("description", ""),
+            "tech": body.get("tech", ""),
+            "start_script": body.get("start_script") or None,
+            "pm2_name": body.get("pm2_name") or None,
+            "ports": [],
+            "services": [body["serviceName"]] if body.get("serviceName") else [],
+            "process_patterns": [],
+            "relations": [],
+            "log_files": [],
+            "notes": ""
+        }
+        save_projects(projects)
+        return JSONResponse({"success": True, "message": f"{name} toegevoegd"})
+
     return web
 
 
@@ -1011,7 +1057,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>pmctl — Project Manager</title>
+  <title>PM2 Interface</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
@@ -1160,7 +1206,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <nav class="navbar navbar-dark sticky-top">
   <div class="container-fluid px-4">
-    <a class="navbar-brand brand" href="#" onclick="showTab('projects')" style="cursor:pointer"><i class="bi bi-grid-3x3-gap-fill me-2"></i>pmctl <span>dashboard</span></a>
+    <a class="navbar-brand brand" href="#" onclick="showTab('projects')" style="cursor:pointer"><i class="bi bi-grid-3x3-gap-fill me-2"></i>PM2 <span>Interface</span></a>
     <div class="d-flex align-items-center gap-3">
       <div class="d-flex gap-1">
         <button onclick="showTab('projects')" id="tab-projects" class="tab-btn active"><i class="bi bi-grid me-1"></i>Projecten</button>
