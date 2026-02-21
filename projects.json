@@ -109,16 +109,16 @@
       "log_files": [],
       "notes": "Beheerd via PM2 (pm2 name: pmctl). Web UI: http://localhost:7777. Start via: pmctl web."
     },
-    "master-dashboard": {
+    "kdc-dashboard": {
       "category": "infra",
-      "path": "/home/kareltestspecial/KDC/master-dashboard",
+      "path": "/home/kareltestspecial/KDC/kdc-dashboard",
       "description": "KDC Dashboard — visueel overzicht van het ecosysteem",
       "tech": "React + Vite (pnpm)",
       "start_script": null,
-      "pm2_name": "master-dashboard",
+      "pm2_name": "kdc-dashboard",
       "ports": [],
-      "services": ["master-dashboard"],
-      "process_patterns": ["master-dashboard/node_modules"],
+      "services": ["kdc-dashboard"],
+      "process_patterns": ["kdc-dashboard/node_modules"],
       "relations": [],
       "log_files": [],
       "notes": "Beheerd via PM2. Poort via register: :3002. Open: http://localhost:3002"

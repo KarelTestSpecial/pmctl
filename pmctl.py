@@ -362,19 +362,24 @@ def get_project_info(name: str, project: Dict, include_disk: bool = True) -> Dic
     procs = find_processes(project)
     running = len(procs) > 0
 
-    # Geheugen uit al opgehaalde processen
+    # Geheugen en CPU uit al opgehaalde processen
     mem_mb = 0.0
+    cpu_percent = 0.0
     proc_list = []
     for p in procs:
         try:
             mem = p.memory_info().rss / 1024 / 1024
             mem_mb += mem
+            # Eerste call geeft 0.0, we gebruiken een kort interval voor een live-indicatie
+            cpu = p.cpu_percent(interval=None) 
+            cpu_percent += cpu
+            
             proc_list.append({
                 "pid": p.pid,
                 "name": p.name(),
                 "cmdline": " ".join(p.cmdline() or [])[:80],
                 "memory_mb": round(mem, 1),
-                "cpu_percent": 0,
+                "cpu_percent": round(cpu, 1),
             })
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
@@ -404,6 +409,7 @@ def get_project_info(name: str, project: Dict, include_disk: bool = True) -> Dic
         "ports": ports,
         "open_ports": sorted(set(open_ports)),
         "memory_mb": round(mem_mb, 1),
+        "cpu_percent": round(cpu_percent, 1),
         "disk_usage": get_disk_usage(project) if include_disk else "...",
         "token_usage": parse_token_usage(project),
         "relations": project.get("relations", []),
@@ -945,6 +951,15 @@ def build_fastapi_app():
             result = dict(ex.map(load_one, projects.items()))
         return JSONResponse(result)
 
+    @web.get("/api/system/stats")
+    def api_system_stats():
+        return JSONResponse({
+            "cpu_total": psutil.cpu_percent(interval=None),
+            "memory": psutil.virtual_memory()._asdict(),
+            "disk": psutil.disk_usage('/')._asdict(),
+            "boot_time": psutil.boot_time()
+        })
+
     @web.get("/api/projects/{name}")
     def api_project(name: str):
         projects = load_projects()
@@ -1011,8 +1026,33 @@ def build_fastapi_app():
 
     @web.post("/api/pm2/stop-all")
     def api_pm2_stop_all():
-        result = subprocess.run(["pm2", "stop", "all"], capture_output=True, text=True)
-        return JSONResponse({"success": result.returncode == 0, "output": result.stdout + result.stderr})
+        projects = load_projects()
+        pm2_to_stop = []
+        for name, proj in projects.items():
+            pm2_name = proj.get("pm2_name")
+            if pm2_name and proj.get("category") != "infra":
+                pm2_to_stop.append(pm2_name)
+        
+        if not pm2_to_stop:
+            return JSONResponse({"success": True, "message": "Geen actieve agents om te stoppen"})
+            
+        for p_name in pm2_to_stop:
+            subprocess.run(["pm2", "stop", p_name])
+            
+        return JSONResponse({"success": True, "message": "Agents gestopt"})
+
+    @web.post("/api/pm2/shutdown")
+    def api_pm2_shutdown():
+        # Geef de response eerst terug voordat we alles killen
+        def _kill():
+            time.sleep(1)
+            subprocess.run(["pm2", "stop", "all"])
+            # Optioneel: pm2 kill om de daemon ook te stoppen
+            # subprocess.run(["pm2", "kill"])
+
+        t = threading.Thread(target=_kill, daemon=True)
+        t.start()
+        return JSONResponse({"success": True, "message": "Systeem wordt afgesloten..."})
 
     @web.post("/api/pm2/start-all")
     def api_pm2_start_all():
